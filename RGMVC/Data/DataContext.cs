@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using RGMVC.Domain;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -12,5 +13,8 @@ namespace RGMVC.Data
 			: base(options)
 		{
 		}
+
+		public DbSet<Post> Posts { get; set; }
+
 	}
 }

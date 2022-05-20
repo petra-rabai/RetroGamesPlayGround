@@ -1,36 +1,65 @@
-﻿using RGMVC.Domain;
+﻿using Microsoft.EntityFrameworkCore;
+using RGMVC.Data;
+using RGMVC.Domain;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace RGMVC.Services
 {
 	public class PostService : IPostService
 	{
-		private readonly List<Post> _posts;
+		private readonly DataContext _dataContext;
 
-		public PostService()
+		public PostService(DataContext dataContext)
 		{
-			_posts = new List<Post>();
-			for (int i = 0; i < 5; i++)
+			_dataContext = dataContext;
+		}
+
+		public async Task<bool> DeletePostAsync(Guid postId)
+		{
+			Post post = await GetPostByIdAsync(postId);
+
+			if (post == null)
 			{
-				_posts.Add(new Post
-				{
-					Id = Guid.NewGuid(),
-					Name = $"Post Name{i}"
-				});
+				return false;
 			}
+
+			 _dataContext.Posts.Remove(post);
+
+			int deleted = await _dataContext.SaveChangesAsync();
+
+			return deleted > 0;
 		}
 
-		public Post GetPostById(Guid postId)
+		public async Task<bool> CreatePostAsync(Post post)
 		{
-			return _posts.SingleOrDefault(post => post.Id == postId);
+			await _dataContext.Posts.AddAsync(post);
+			
+			int created = await _dataContext.SaveChangesAsync();
 
+			return created > 0;
 		}
 
-		public List<Post> GetPosts()
+		public async Task< Post> GetPostByIdAsync(Guid postId)
 		{
-			return _posts;
+			return await _dataContext.Posts.SingleOrDefaultAsync(post => post.Id == postId);
+		}
+
+		public async Task< List<Post>> GetPostsAsync()
+		{
+			return await _dataContext.Posts.ToListAsync();
+		}
+
+		public async Task<bool> UpdatePostAsync(Post postToUpdate)
+		{
+			 _dataContext.Posts.Update(postToUpdate);
+
+			int updated = await _dataContext.SaveChangesAsync();
+
+			return updated > 0;
+
 		}
 	}
 }
