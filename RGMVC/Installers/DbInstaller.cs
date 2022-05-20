@@ -19,6 +19,8 @@ namespace RGMVC.Installers
 				.AddEntityFrameworkStores<DataContext>();
 
 			services.AddScoped<IPostService, PostService>();
+			//services.AddSingleton<IPostService, CosmosPostService>();
+
 
 		}
 	}

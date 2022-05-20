@@ -1,35 +1,76 @@
-﻿using RGMVC.Domain;
+﻿using Cosmonaut;
+using Cosmonaut.Extensions;
+using Cosmonaut.Response;
+using RGMVC.Domain;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace RGMVC.Services
 {
 	public class CosmosPostService : IPostService
 	{
-		public Task<bool> CreatePostAsync(Post post)
+		private readonly ICosmosStore<CosmosPostDto> _cosmosStore;
+
+		public CosmosPostService(ICosmosStore<CosmosPostDto> cosmosStore)
 		{
-			throw new NotImplementedException();
+			_cosmosStore = cosmosStore;
 		}
 
-		public Task<bool> DeletePostAsync(Guid postId)
+		public async Task<bool> CreatePostAsync(Post post)
 		{
-			throw new NotImplementedException();
+			CosmosPostDto cosmosPost = new CosmosPostDto
+			{
+				Id = Guid.NewGuid().ToString(),
+				Name = post.Name
+			};
+
+			CosmosResponse<CosmosPostDto> response = await _cosmosStore.AddAsync(cosmosPost);
+
+			post.Id = Guid.Parse(cosmosPost.Id);
+
+			return response.IsSuccess;
+
 		}
 
-		public Task<Post> GetPostByIdAsync(Guid postId)
+		public async Task<bool> DeletePostAsync(Guid postId)
 		{
-			throw new NotImplementedException();
+			CosmosResponse<CosmosPostDto> response = await _cosmosStore.RemoveByIdAsync(postId.ToString(), (postId.ToString()));
+
+			return response.IsSuccess; 
 		}
 
-		public Task<List<Post>> GetPostsAsync()
+		public async Task<Post> GetPostByIdAsync(Guid postId)
 		{
-			throw new NotImplementedException();
+			var post = await _cosmosStore.FindAsync(postId.ToString());
+
+			if (post == null)
+			{
+				return null;
+			}
+
+			return new Post { Id = Guid.Parse(post.Id), Name = post.Name };
 		}
 
-		public Task<bool> UpdatePostAsync(Post postToUpdate)
+		public async Task<List<Post>> GetPostsAsync()
 		{
-			throw new NotImplementedException();
+			List<CosmosPostDto> posts = await _cosmosStore.Query().ToListAsync();
+
+			return posts.Select(post => new Post { Id = Guid.Parse(post.Id), Name = post.Name}).ToList();
+		}
+
+		public async Task<bool> UpdatePostAsync(Post postToUpdate)
+		{
+			CosmosPostDto cosmosPost = new CosmosPostDto
+			{
+				Id = postToUpdate.Id.ToString(),
+				Name = postToUpdate.Name
+			};
+
+			CosmosResponse<CosmosPostDto> response = await _cosmosStore.UpdateAsync(cosmosPost);
+
+			return response.IsSuccess;
 		}
 	}
 }
